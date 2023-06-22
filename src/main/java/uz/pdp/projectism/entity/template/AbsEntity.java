@@ -1,9 +1,6 @@
 package uz.pdp.projectism.entity.template;
 
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
-import jakarta.persistence.Id;
-import jakarta.persistence.MappedSuperclass;
+import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -20,14 +17,15 @@ import java.util.UUID;
 public abstract class AbsEntity {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.UUID)
+    @GeneratedValue
     private UUID id;
 
     @CreationTimestamp
+    @Column(name="created_at")
     private Timestamp createdAt;
 
     @UpdateTimestamp
+    @Column(name="updated_at")
     private Timestamp updatedAt;
 
-    private boolean deleted;
 }

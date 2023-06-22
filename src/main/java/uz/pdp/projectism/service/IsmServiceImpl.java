@@ -1,13 +1,17 @@
 package uz.pdp.projectism.service;
 
 import lombok.RequiredArgsConstructor;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import uz.pdp.projectism.entity.Ism;
+import uz.pdp.projectism.entity.User;
 import uz.pdp.projectism.exceptions.RestException;
 import uz.pdp.projectism.payload.ApiResponse;
 import uz.pdp.projectism.payload.IsmDTO;
 import uz.pdp.projectism.repository.IsmRepository;
 
+import java.sql.Timestamp;
+import java.util.Date;
 import java.util.List;
 import java.util.UUID;
 
@@ -18,19 +22,26 @@ public class IsmServiceImpl implements IsmService {
 
 
     @Override
-    public ApiResponse<?> getById(Long id) {
+    public ApiResponse<?> getById(UUID id) {
+        User currentUser = (User) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+        boolean enabled = currentUser.isEnabled();
+        if (!enabled){
+            return ApiResponse.errorResponse(RestException.unauthorized("Please activate your Email!")
+                    .getMessage());
+        }
         Ism ism = ismRepository.findById(id).orElseThrow(() -> RestException.notFound("Ism not found!"));
         return ApiResponse.successResponse(ism,"found");
     }
 
-    @Override
-    public ApiResponse<?> getAllIsmlar() {
-        List<Ism> allIsmlar = ismRepository.findAll();
-        return ApiResponse.successResponse(allIsmlar,"Done!");
-    }
 
     @Override
-    public ApiResponse<?> editIsm(Long id, IsmDTO ismDTO) {
+    public ApiResponse<?> editIsm(UUID id, IsmDTO ismDTO) {
+        User currentUser = (User) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+        boolean enabled = currentUser.isEnabled();
+        if (!enabled){
+            return ApiResponse.errorResponse(RestException.unauthorized("Please activate your Email!")
+                    .getMessage());
+        }
         Ism ism = ismRepository.findById(id).orElseThrow(() -> RestException.notFound("Ism not found!"));
         ism.setNameLat(ismDTO.getNameLat());
         ism.setNameCyr(ismDTO.getNameCyr());
@@ -39,12 +50,20 @@ public class IsmServiceImpl implements IsmService {
         ism.setComingLang(ismDTO.getComingLang());
         ism.setLikeCount(ismDTO.getLikeCount());
         ism.setNamedPeople(ismDTO.getNamedPeople());
-        ismRepository.save(ism);
-        return ApiResponse.successResponse(ism,"Edited!");
+        Ism savedIsm = ismRepository.save(ism);
+        savedIsm.setUpdatedAt(new Timestamp(System.currentTimeMillis()));
+        Ism save = ismRepository.save(savedIsm);
+        return ApiResponse.successResponse(save,"Edited!");
     }
 
     @Override
-    public ApiResponse<?> deleteIsm(Long id) {
+    public ApiResponse<?> deleteIsm(UUID id) {
+        User currentUser = (User) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+        boolean enabled = currentUser.isEnabled();
+        if (!enabled){
+            return ApiResponse.errorResponse(RestException.unauthorized("Please activate your Email!")
+                    .getMessage());
+        }
         Ism ism = ismRepository.findById(id).orElseThrow(() -> RestException.notFound("Ism not found!"));
         ismRepository.delete(ism);
         return ApiResponse.successResponse("deleted");
@@ -52,6 +71,12 @@ public class IsmServiceImpl implements IsmService {
 
     @Override
     public ApiResponse<?> addIsm(IsmDTO ismDTO) {
+        User currentUser = (User) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+        boolean enabled = currentUser.isEnabled();
+        if (!enabled){
+            return ApiResponse.errorResponse(RestException.unauthorized("Please activate your Email!")
+                    .getMessage());
+        }
         Ism ism=new Ism(
                 ismDTO.getNameLat(),
                 ismDTO.getNameCyr(),
@@ -62,22 +87,52 @@ public class IsmServiceImpl implements IsmService {
                 ismDTO.getComingLang()
         );
         Ism save = ismRepository.save(ism);
-        return ApiResponse.successResponse(ism,"Saved");
+        return ApiResponse.successResponse(save,"Saved");
     }
 
     @Override
-    public ApiResponse<?> increaseLikeCount(Long id) {
+    public ApiResponse<?> increaseLikeCount(UUID id) {
+        User currentUser = (User) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+        boolean enabled = currentUser.isEnabled();
+        if (!enabled){
+            return ApiResponse.errorResponse(RestException.unauthorized("Please activate your Email!")
+                    .getMessage());
+        }
         Ism ism = ismRepository.findById(id).orElseThrow(() -> RestException.notFound("Ism not found!"));
         ism.setLikeCount(ism.getLikeCount()+1);
         Ism savedIsm = ismRepository.save(ism);
-        return ApiResponse.successResponse(savedIsm,"Liked!");
+        return ApiResponse.successResponse("Liked!");
     }
 
     @Override
-    public ApiResponse<?> decreaseLikeCount(Long id) {
+    public ApiResponse<?> decreaseLikeCount(UUID id) {
+        User currentUser = (User) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+        boolean enabled = currentUser.isEnabled();
+        if (!enabled){
+            return ApiResponse.errorResponse(RestException.unauthorized("Please activate your Email!")
+                    .getMessage());
+        }
         Ism ism = ismRepository.findById(id).orElseThrow(() -> RestException.notFound("Ism not found!"));
         ism.setLikeCount(ism.getLikeCount()-1);
         Ism savedIsm = ismRepository.save(ism);
-        return ApiResponse.successResponse(savedIsm,"Unliked");
+        return ApiResponse.successResponse("Unliked");
     }
+
+    @Override
+    public ApiResponse<?> getAllIsmlar(Date date) {
+        User currentUser = (User) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+        boolean enabled = currentUser.isEnabled();
+        if (!enabled){
+            return ApiResponse.errorResponse(RestException.unauthorized("Please activate your Email!")
+                    .getMessage());
+        }
+        if (date == null){
+            List<Ism> all = ismRepository.findAll();
+        return ApiResponse.successResponse(all,"Here you are!");
+        }
+        List<Ism> byUpdatedAt = ismRepository.findAllByUpdatedAtAfter(date);
+        return ApiResponse.successResponse(byUpdatedAt,"Here you are!");
+    }
+
+
 }

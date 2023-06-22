@@ -21,4 +21,6 @@ public class UserDTO {
     private String password;
     @NotBlank
     private UUID roleId;
+
+
 }

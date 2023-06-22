@@ -1,13 +1,17 @@
 package uz.pdp.projectism.service;
 
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
 import org.springframework.mail.SimpleMailMessage;
 import org.springframework.mail.javamail.JavaMailSender;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.web.client.HttpClientErrorException;
 import uz.pdp.projectism.entity.ConfirmationToken;
 import uz.pdp.projectism.entity.Role;
 import uz.pdp.projectism.entity.User;
+import uz.pdp.projectism.entity.enums.RoleType;
 import uz.pdp.projectism.exceptions.RestException;
 import uz.pdp.projectism.payload.ApiResponse;
 import uz.pdp.projectism.payload.UserDTO;
@@ -34,13 +38,27 @@ public class UserServiceImpl implements UserService {
 
     @Override
     public ApiResponse<?> addUser(UserDTO userDTO) {
-        Role roleByDto = roleRepository.findById(userDTO.getRoleId()).orElseThrow(() -> RestException.notFound("Role Not Found"));
+        User principal = (User) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+        boolean enabled = principal.isEnabled();
+        if (!enabled){
+            return ApiResponse.errorResponse(RestException.unauthorized("Please activate your Email!")
+                    .getMessage());
+        }
+
+        System.out.println(principal);
+        Role currentRole = principal.getRole();
+        Role role = roleRepository.findById(userDTO.getRoleId()).orElseThrow(() -> RestException.notFound("Role not found!"));
+        if (currentRole.getRoleType().equals(RoleType.ADMIN) &&
+                (role.getRoleType().equals(RoleType.ADMIN)||role.getRoleType().equals(RoleType.DIRECTOR) ))
+            return ApiResponse.errorResponse(RestException.forbidden());
+
+//        Role roleByDto = roleRepository.findById(userDTO.getRoleId()).orElseThrow(() -> RestException.notFound("Role Not Found"));
         User user = new User(
                 userDTO.getFirstname(),
                 userDTO.getLastname(),
                 userDTO.getEmail(),
                 passwordEncoder.encode(userDTO.getPassword()),
-                roleByDto,
+                role,
                 false
         );
         User savedUser = userRepository.save(user);
@@ -60,22 +78,55 @@ public class UserServiceImpl implements UserService {
 
     @Override
     public ApiResponse<?> getById(UUID id) {
+//        User principal = (User) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+//        System.out.println(principal);
+//        Role role = principal.getRole();
+//        if (!role.getRoleType().equals(RoleType.DIRECTOR))
+//            return ApiResponse.errorResponse(RestException.forbidden());
+        User principal = (User) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+        boolean enabled = principal.isEnabled();
+        if (!enabled){
+            return ApiResponse.errorResponse(RestException.unauthorized("Please activate your Email!")
+                    .getMessage());
+        }
         User userById = userRepository.findById(id).orElseThrow(() -> RestException.notFound("User not Found"));
         return ApiResponse.successResponse(userById, "Done!");
     }
 
     @Override
     public ApiResponse<?> getAllUsers() {
+        User principal = (User) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+        boolean enabled = principal.isEnabled();
+        if (!enabled){
+            return ApiResponse.errorResponse(RestException.unauthorized("Please activate your Email!")
+                    .getMessage());
+        }
+
         List<User> allUsers = userRepository.findAll();
         return ApiResponse.successResponse(allUsers, "Done!");
     }
 
     @Override
     public ApiResponse<?> editUser(UUID id, UserDTO userDTO) {
+        User principal = (User) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+        boolean enabled = principal.isEnabled();
+        if (!enabled){
+            return ApiResponse.errorResponse(RestException.unauthorized("Please activate your Email!")
+                    .getMessage());
+        }
+
+
+        System.out.println(principal);
+        Role currentRole = principal.getRole();
+        Role role = roleRepository.findById(userDTO.getRoleId()).orElseThrow(() -> RestException.notFound("Role not found!"));
+        if (currentRole.getRoleType().equals(RoleType.ADMIN) &&
+                (role.getRoleType().equals(RoleType.ADMIN)||role.getRoleType().equals(RoleType.DIRECTOR) ))
+            return ApiResponse.errorResponse(RestException.forbidden());
+
+
         User userById = userRepository.findById(id).orElseThrow(() -> RestException.notFound("UserNotFound"));
         userById.setFirstname(userDTO.getFirstname());
         userById.setLastname(userDTO.getLastname());
-        Role role = roleRepository.findById(userDTO.getRoleId()).orElseThrow(() -> RestException.notFound("Role not found!"));
         userById.setRole(role);
         userById.setPassword(passwordEncoder.encode(userDTO.getPassword()));
         User save = userRepository.save(userById);
@@ -84,7 +135,20 @@ public class UserServiceImpl implements UserService {
 
     @Override
     public ApiResponse<?> deleteUser(UUID id) {
+        User currentUser = (User) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+        boolean enabled = currentUser.isEnabled();
+        if (!enabled){
+            return ApiResponse.errorResponse(RestException.unauthorized("Please activate your Email!")
+                    .getMessage());
+        }
+
+        Role currentUserRole = currentUser.getRole();
         User user = userRepository.findById(id).orElseThrow(() -> RestException.notFound("Not found!"));
+        if (currentUserRole.getRoleType().equals(RoleType.ADMIN)
+                && user.getRole().getRoleType().equals(RoleType.DIRECTOR) ){
+            return ApiResponse.errorResponse(RestException.forbidden());
+        }
+
         ConfirmationToken confirmationToken = confirmationTokenRepository.findByUser(user).orElseThrow(() -> RestException.notFound("ConfirmationToken not found"));
         confirmationTokenRepository.delete(confirmationToken);
         userRepository.delete(user);

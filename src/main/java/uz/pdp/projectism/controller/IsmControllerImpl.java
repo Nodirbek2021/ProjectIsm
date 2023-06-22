@@ -6,6 +6,7 @@ import uz.pdp.projectism.payload.ApiResponse;
 import uz.pdp.projectism.payload.IsmDTO;
 import uz.pdp.projectism.service.IsmService;
 
+import java.util.Date;
 import java.util.UUID;
 
 @RestController
@@ -15,22 +16,18 @@ public class IsmControllerImpl implements IsmController {
     private final IsmService ismService;
 
     @Override
-    public ApiResponse<?> getById(Long id) {
+    public ApiResponse<?> getById(UUID id) {
         return ismService.getById(id);
     }
 
-    @Override
-    public ApiResponse<?> getAllIsmlar() {
-        return ismService.getAllIsmlar();
-    }
 
     @Override
-    public ApiResponse<?> editIsm(Long id, IsmDTO ismDTO) {
+    public ApiResponse<?> editIsm(UUID id, IsmDTO ismDTO) {
         return ismService.editIsm(id,ismDTO);
     }
 
     @Override
-    public ApiResponse<?> deleteIsm(Long id) {
+    public ApiResponse<?> deleteIsm(UUID id) {
         return ismService.deleteIsm(id);
     }
 
@@ -40,12 +37,19 @@ public class IsmControllerImpl implements IsmController {
     }
 
     @Override
-    public ApiResponse<?> increaseLikeCount(Long id) {
+    public ApiResponse<?> increaseLikeCount(UUID id) {
         return ismService.increaseLikeCount(id);
     }
 
     @Override
-    public ApiResponse<?> decreaseLikeCount(Long id) {
+    public ApiResponse<?> decreaseLikeCount(UUID id) {
         return ismService.decreaseLikeCount(id);
     }
+
+    @Override
+    public ApiResponse<?> getAllIsmlar(Date date) {
+        return ismService.getAllIsmlar(date);
+    }
+
+
 }

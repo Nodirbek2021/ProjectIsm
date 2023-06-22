@@ -1,0 +1,1 @@
+ALTER TABLE roles add constraint role_type_unique unique (role_type);

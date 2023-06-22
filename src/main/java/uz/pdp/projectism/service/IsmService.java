@@ -5,21 +5,21 @@ import org.springframework.web.bind.annotation.*;
 import uz.pdp.projectism.payload.ApiResponse;
 import uz.pdp.projectism.payload.IsmDTO;
 
+import java.util.Date;
 import java.util.UUID;
 
 public interface IsmService {
-    ApiResponse<?> getById( Long id);
+    ApiResponse<?> getById( UUID id);
 
+    ApiResponse<?>editIsm( UUID id,  IsmDTO ismDTO);
 
-    ApiResponse<?>getAllIsmlar();
-
-    ApiResponse<?>editIsm( Long id,  IsmDTO ismDTO);
-
-    ApiResponse<?>deleteIsm( Long id);
+    ApiResponse<?>deleteIsm( UUID id);
 
     ApiResponse<?> addIsm(IsmDTO ismDTO);
-    ApiResponse<?> increaseLikeCount(Long id);
-    ApiResponse<?> decreaseLikeCount(Long id);
+    ApiResponse<?> increaseLikeCount(UUID id);
+    ApiResponse<?> decreaseLikeCount(UUID id);
 
 
+
+    ApiResponse<?> getAllIsmlar(Date date);
 }

@@ -42,7 +42,7 @@ public class AuthServiceImpl implements AuthService{
 
     @Override
     public ApiResponse<AuthenticationResponse> register(RegisterDTO registerDTO) {
-        Role roleByType = roleRepository.findByRoleType(RoleType.USER).orElseThrow(() -> RestException.notFound("RoleNotFound"));
+        Role roleByType = roleRepository.findFirstByRoleType(RoleType.USER).orElseThrow(() -> RestException.notFound("RoleNotFound"));
         if (userRepository.existsByEmail(registerDTO.getEmail())){
             return ApiResponse.errorResponse(RestException.conflict("Email already used.").getMessage());
         }

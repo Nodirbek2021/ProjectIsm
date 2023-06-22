@@ -37,6 +37,7 @@ public class User extends AbsEntity implements UserDetails {
     }
 
 
+    @Column(name = "is_enabled")
     private boolean isEnabled;
 
 

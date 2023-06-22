@@ -8,29 +8,25 @@ import lombok.NoArgsConstructor;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.Date;
+import java.util.UUID;
 
 @AllArgsConstructor
 @NoArgsConstructor
 @Data
 @Entity
+@Table(name = "confirmation_token")
 public class ConfirmationToken {
-    @SequenceGenerator(
-            name = "confirmation_token_sequence",
-            sequenceName = "confirmation_token_sequence",
-            allocationSize = 1
-    )
     @Id
-    @GeneratedValue(
-            strategy = GenerationType.SEQUENCE,
-            generator = "confirmation_token_sequence"
-    )
-    @Column(nullable = false)
-    private Long tokenId;
+    @GeneratedValue
+    private UUID id;
 
     @Column(nullable = false)
     private String token;
+    @Column(name = "created_at")
     private LocalDateTime createdAt;
+    @Column(name = "expires_at")
     private LocalDateTime expiresAt;
+    @Column(name = "confirmed_at")
     private LocalDateTime confirmedAt;
 
     @ManyToOne

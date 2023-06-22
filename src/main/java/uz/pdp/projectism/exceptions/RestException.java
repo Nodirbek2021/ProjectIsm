@@ -1,16 +1,12 @@
 package uz.pdp.projectism.exceptions;
 
-import lombok.Data;
 import org.springframework.http.HttpStatus;
+import org.springframework.web.client.HttpStatusCodeException;
 
-@Data
-public class RestException extends RuntimeException {
-    private String message;
-    private HttpStatus status;
+public class RestException extends HttpStatusCodeException {
 
     private RestException(String message, HttpStatus status) {
-        this.message = message;
-        this.status = status;
+        super(status, message);
     }
 
     public static RestException notFound(String key){
@@ -29,7 +25,7 @@ public class RestException extends RuntimeException {
         return new RestException("Something went wrong!", HttpStatus.CONFLICT);
     }
 
-    public static RestException forbidden() {
-        return new RestException("STOP!!!____Forbidden!", HttpStatus.FORBIDDEN);
+    public static String forbidden() {
+        throw new RestException("STOP!!!____Forbidden!", HttpStatus.FORBIDDEN);
     }
 }
